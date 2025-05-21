@@ -1,0 +1,104 @@
+pip install pygame
+import pygame
+import random
+import sys
+
+# Initialize Pygame
+pygame.init()
+
+# Set up display
+WIDTH, HEIGHT = 800, 600
+win = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Simple Car Driving Game")
+
+# Colors
+WHITE = (255, 255, 255)
+GRAY = (100, 100, 100)
+YELLOW = (255, 255, 0)
+RED = (255, 0, 0)
+
+# Clock
+clock = pygame.time.Clock()
+FPS = 60
+
+# Load car image
+car_image = pygame.image.load("car.png")  # Replace with your own car image (64x128 px)
+car_image = pygame.transform.scale(car_image, (64, 128))
+
+# Car properties
+car_x = WIDTH // 2 - 32
+car_y = HEIGHT - 150
+car_speed = 5
+
+# Obstacle properties
+obstacle_width = 64
+obstacle_height = 128
+obstacle_speed = 7
+obstacles = []
+
+# Road boundaries
+LEFT_BOUNDARY = WIDTH // 2 - 150
+RIGHT_BOUNDARY = WIDTH // 2 + 150
+
+def draw_road():
+    win.fill(GRAY)
+    pygame.draw.rect(win, YELLOW, (WIDTH // 2 - 5, 0, 10, HEIGHT))  # Center line
+    pygame.draw.rect(win, WHITE, (LEFT_BOUNDARY, 0, 5, HEIGHT))      # Left road edge
+    pygame.draw.rect(win, WHITE, (RIGHT_BOUNDARY, 0, 5, HEIGHT))     # Right road edge
+
+def draw_car(x, y):
+    win.blit(car_image, (x, y))
+
+def draw_obstacles(obstacles_list):
+    for obs in obstacles_list:
+        pygame.draw.rect(win, RED, obs)
+
+def main():
+    global car_x
+    running = True
+    frame_count = 0
+
+    while running:
+        clock.tick(FPS)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        # Movement
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT] and car_x > LEFT_BOUNDARY:
+            car_x -= car_speed
+        if keys[pygame.K_RIGHT] and car_x < RIGHT_BOUNDARY - 64:
+            car_x += car_speed
+
+        # Obstacle creation
+        frame_count += 1
+        if frame_count % 60 == 0:
+            obs_x = random.randint(LEFT_BOUNDARY, RIGHT_BOUNDARY - obstacle_width)
+            obstacles.append(pygame.Rect(obs_x, -obstacle_height, obstacle_width, obstacle_height))
+
+        # Move obstacles
+        for obs in obstacles:
+            obs.y += obstacle_speed
+
+        # Collision detection
+        car_rect = pygame.Rect(car_x, car_y, 64, 128)
+        for obs in obstacles:
+            if car_rect.colliderect(obs):
+                print("Game Over!")
+                pygame.quit()
+                sys.exit()
+
+        # Remove off-screen obstacles
+        obstacles[:] = [obs for obs in obstacles if obs.y < HEIGHT]
+
+        # Drawing
+        draw_road()
+        draw_car(car_x, car_y)
+        draw_obstacles(obstacles)
+        pygame.display.update()
+
+    pygame.quit()
+
+if __name__ == "__main__":
+    main()
